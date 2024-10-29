@@ -1,6 +1,6 @@
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-import catboost as cb
+# import catboost as cb
 from config import Config
 
 class LogisticRegressionModel:
