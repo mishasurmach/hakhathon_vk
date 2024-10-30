@@ -5,8 +5,10 @@ class Config:
 
     # модель для обучения
     # MODEL_TO_TRAIN = 'LogReg'
-    MODEL_TO_TRAIN = 'CatBoost'
+    # MODEL_TO_TRAIN = 'CatBoost'
     # MODEL_TO_TRAIN = 'Tree'
+    # MODEL_TO_TRAIN = 'LightGBM'
+    MODEL_TO_TRAIN = 'MLP'
 
     MODEL_TO_INFERENCE_PATH = 'trained_models/catboost_model_1730246243.224709.pkl'
 
@@ -35,6 +37,17 @@ class Config:
     CATBOOST_LEARNING_RATE = 0.1
     CATBOOST_DEPTH = 6
     CATBOOST_VERBOSE = 100
+
+    # Гиперпараметры для LightGBM
+    LGB_NUM_BOOST_ROUND = 100
+    LGB_LEARNING_RATE  = 0.2
+    LGB_NUM_LEAVES = 127
+
+    # Гиперпараметры для MLP
+    MLP_HIDDEN_DIMENSION_1 = 128
+    MLP_HIDDEN_DIMENSION_2 = 50
+    MLP_LEARNING_RATE = 0.003
+    MLP_NUMBER_OF_EPOCHS = 50
     
     # Гиперпараметры для DataLoader и модели
     MODEL_NAME = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'

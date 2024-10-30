@@ -3,7 +3,8 @@ from sklearn.ensemble import RandomForestClassifier
 import catboost as cb
 import lightgbm as lgb
 from config import Config
-import lightgbm as lgb
+import torch
+import torch.nn as nn
 
 class LogisticRegressionModel:
     def __init__(self):
@@ -81,3 +82,17 @@ class LightGBMRankerModel:
 
     def predict(self, X, group=None):
         return self.model.predict(X)
+
+class MLP(nn.Module):
+    def __init__(self):
+        super(MLP, self).__init__()
+
+        self.fc1 = nn.Linear(768, Config.MLP_HIDDEN_DIMENSION_1)
+        self.fc2 = nn.Linear(Config.MLP_HIDDEN_DIMENSION_1, Config.MLP_HIDDEN_DIMENSION_2)
+        self.fc3 = nn.Linear(Config.MLP_HIDDEN_DIMENSION_2, 1)  
+
+    def forward(self, x):
+        x = torch.tanh(self.fc1(x))
+        x = torch.tanh(self.fc2(x))
+        x = torch.sigmoid(self.fc3(x))
+        return x

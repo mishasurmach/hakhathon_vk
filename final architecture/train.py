@@ -1,13 +1,18 @@
 import pandas as pd
 import numpy as np
 from config import Config
-from models import LogisticRegressionModel, RandomForestModel, CatBoostRankerModel, LightGBMRankerModel
+from models import LogisticRegressionModel, RandomForestModel, CatBoostRankerModel, LightGBMRankerModel, MLP
 import catboost as cb
 from collections import Counter
 from evaluate import evaluate
+from evaluate import calculate_ndcg_by_group
+from sklearn.metrics import average_precision_score, roc_auc_score
 import joblib
 import time
-
+import torch
+from torch.utils.tensorboard import SummaryWriter
+import torch.nn as nn
+import torch.optim as optim
 
 # import onnx
 # import onnxmltools 
@@ -104,6 +109,59 @@ def train_lightGBM(df_train, df_test, df_val):
     y_pred = model.predict(X_test, group_test)
     return y_pred, y_test, group_test
 
+def train_iterative(model, X_train, y_train, X_test, y_test, group_test, lr=0.001, epochs = 20, number_of_exp = 1):
+    writer = SummaryWriter(log_dir=f"runs/experiment{number_of_exp}")
+    
+    criterion = nn.BCELoss()
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+
+    for epoch in range(epochs):
+        model.train()
+        
+        outputs = model(X_train).squeeze()
+        loss = criterion(outputs, y_train)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        # Логирование метрик каждые 10 эпох
+        if (epoch + 1) % 5 == 0:
+            model.eval()
+            with torch.no_grad():
+                y_pred = (model(X_test).squeeze() > 0.5).float()
+                precision = average_precision_score(y_test.numpy(), y_pred.numpy())
+                ndcg = calculate_ndcg_by_group(y_test, y_pred, group_test)
+                auc = roc_auc_score(y_test.numpy(), y_pred.numpy())
+
+                writer.add_scalar("Loss", loss.item(), epoch)
+                writer.add_scalar("Average Precision", precision, epoch)
+                writer.add_scalar("NDCG", ndcg, epoch)
+                writer.add_scalar("AUC", auc, epoch)
+    
+    writer.close()
+
+def train_MLP(df_train, df_test):
+    X_train, y_train, group_train = prepare_data(df_train)
+    X_test, y_test, group_test = prepare_data(df_test)
+
+    X_train = torch.FloatTensor(X_train)
+    y_train = torch.FloatTensor(y_train)
+    X_test = torch.FloatTensor(X_test)
+    y_test = torch.FloatTensor(y_test)
+        
+    model = MLP()
+    train_iterative(model, X_train, y_train, X_test, y_test, group_test, 
+                             Config.MLP_LEARNING_RATE, Config.MLP_NUMBER_OF_EPOCHS)
+    
+    path = f'trained_models/MLP_{time.time()}.pkl'
+    save_model(model, path)
+
+    with torch.no_grad():
+        y_pred = (model(X_test).squeeze() > 0.5).float()
+
+    return y_pred, y_test, group_test
+
 
 if __name__ == "__main__":
     df_train, df_val, df_test = load_data()
@@ -123,3 +181,8 @@ if __name__ == "__main__":
     if (Config.MODEL_TO_TRAIN == 'LightGBM'):
         y_pred, y_test, group_test = train_lightGBM(df_train, df_test, df_val)
         evaluate(y_pred, y_test, group_test)
+
+    if (Config.MODEL_TO_TRAIN == 'MLP'):
+        y_pred, y_test, group_test = train_MLP(df_train, df_test)
+        evaluate(y_pred, y_test, group_test)
+
