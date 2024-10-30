@@ -1,6 +1,8 @@
 import time
 
 class Config:
+    PYTHON = 'python3.11'
+
     # модель для обучения
     # MODEL_TO_TRAIN = 'LogReg'
     MODEL_TO_TRAIN = 'CatBoost'

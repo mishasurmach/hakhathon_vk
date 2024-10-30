@@ -81,20 +81,36 @@ class DataPreprocessor:
         # Разделение данных
         df_train, df_val, df_test = self.split_datasets()
         
-        # Кодирование запросов
-        df_train['query_emb'] = self.encode_queries(df_train, 'query')
-        df_val['query_emb'] = self.encode_queries(df_val, 'query')
-        df_test['query_emb'] = self.encode_queries(df_test, 'query')
+        # Replace the current encoding line in preprocess_and_save
+        query_embeddings_train = self.model.encode(df_train['query'].tolist())
+        query_embeddings_val = self.model.encode(df_val['query'].tolist())
+        query_embeddings_test = self.model.encode(df_test['query'].tolist())
+
+        # np.save("query_embeddings_train_SBERT_without_lemma.npy", query_embeddings_train)
+        # np.save("query_embeddings_val_SBERT_without_lemma.npy", query_embeddings_val)
+        # np.save("query_embeddings_test_SBERT_without_lemma.npy", query_embeddings_test)
+
+        # query_embeddings_train = np.load("query_embeddings_train_SBERT_without_lemma.npy").tolist()
+        # query_embeddings_val = np.load("query_embeddings_val_SBERT_without_lemma.npy").tolist()
+        # query_embeddings_test = np.load("query_embeddings_test_SBERT_without_lemma.npy").tolist()
+
+        df_train['query_emb'] = list(query_embeddings_train)
+        df_val['query_emb'] = list(query_embeddings_val)
+        df_test['query_emb'] = list(query_embeddings_test)
         
         # Создание расширенного набора данных с позитивными и негативными примерами
         df_train = self.create_expanded_dataset(df_train)
         df_val = self.create_expanded_dataset(df_val)
         df_test = self.create_expanded_dataset(df_test)
+
+        passage_embeddings_train = self.model.encode(df_train['passage_text'].tolist())
+        passage_embeddings_val = self.model.encode(df_val['passage_text'].tolist())
+        passage_embeddings_test = self.model.encode(df_test['passage_text'].tolist())
         
         # Кодирование текстов пассажа
-        df_train['passage_emb'] = self.encode_passages(df_train, 'passage_text')
-        df_val['passage_emb'] = self.encode_passages(df_val, 'passage_text')
-        df_test['passage_emb'] = self.encode_passages(df_test, 'passage_text')
+        df_train['passage_emb'] = list(passage_embeddings_train)
+        df_val['passage_emb'] = list(passage_embeddings_val)
+        df_test['passage_emb'] = list(passage_embeddings_test)      
         
         # Добавление мер близости
         df_train = self.add_similarity_measures(df_train).drop(columns=['passage_text'])
