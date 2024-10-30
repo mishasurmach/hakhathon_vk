@@ -2,13 +2,19 @@ import pandas as pd
 import numpy as np
 from datasets import load_dataset
 from scipy.spatial import distance
+from config import Config
 from sentence_transformers import SentenceTransformer
 
 class DataPreprocessor:
     def __init__(self, model_name='sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'):
         self.model = SentenceTransformer(model_name)
+        self.dataset_train = None
+        self.dataset_dev = None
+
+    def load_datasets(self):
         self.dataset_train = load_dataset("cohere/miracl-ru-queries-22-12", split="train")
         self.dataset_dev = load_dataset("cohere/miracl-ru-queries-22-12", split="dev")
+
 
     def split_datasets(self):
         train_df = self.dataset_train.to_pandas().drop(columns=['emb'])
@@ -96,26 +102,25 @@ class DataPreprocessor:
         df_test = self.add_similarity_measures(df_test).drop(columns=['passage_text'])
         
         # Сохранение данных
-        df_train.to_pickle('train_data.pkl')
-        df_val.to_pickle('val_data.pkl')
-        df_test.to_pickle('test_data.pkl')
+        df_train.to_pickle(Config.TRAIN_DATA_PATH)
+        df_val.to_pickle(Config.VAL_DATA_PATH)
+        df_test.to_pickle(Config.TEST_DATA_PATH)
 
     def preprocess_single(self, query, passage_text):
         # Кодирование запроса и текста пассажа
         query_emb = self.model.encode([query])[0]
         passage_emb = self.model.encode([passage_text])[0]
-        
+
         # Вычисление мер близости
         similarity_measures = self.calculate_similarity_measures(query_emb, passage_emb)
-        
-        # Возвращаем предобработанный объект для модели
-        return {
-            'query_emb': query_emb,
-            'passage_emb': passage_emb,
-            **similarity_measures
-        }
 
+        output = np.hstack((query_emb, passage_emb))
+        for col in Config.ADDITIONAL_EMB_COLUMNS:
+            output = np.hstack((output,similarity_measures[col]))
+            
+        return output
+    
 if __name__ == "__main__":
     preprocessor = DataPreprocessor()
+    preprocessor.load_datasets()  # Загрузка данных при необходимости
     preprocessor.preprocess_and_save()
-

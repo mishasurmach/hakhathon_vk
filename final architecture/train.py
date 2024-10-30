@@ -2,7 +2,15 @@ import pandas as pd
 import numpy as np
 from config import Config
 from models import LogisticRegressionModel, RandomForestModel, CatBoostRankerModel
+import catboost as cb
 from evaluate import evaluate
+import joblib
+import time
+
+# import onnx
+# import onnxmltools 
+# from skl2onnx import convert_sklearn
+# from skl2onnx.common.data_types import FloatTensorType
 
 def load_data():
     df_train = pd.read_pickle(Config.TRAIN_DATA_PATH)
@@ -21,12 +29,27 @@ def prepare_data(df, query_emb_col='query_emb', passage_emb_col='passage_emb', l
     group = df[query_id_col].values
     return X, y, group
 
+# def save_model_onnx(model, X_sample, model_name="model.onnx"):
+#     # Задаем начальные типы данных на основе данных X_sample
+#     n_features = X_sample.shape[1]
+#     initial_type = [("input", FloatTensorType([None, n_features]))]
+#     onnx_model = convert_sklearn(model, initial_types=initial_type)
+#     onnxmltools.utils.save_model(onnx_model, model_name)
+
+def save_model(model, filename):
+    joblib.dump(model, filename)
+    print(f"Model saved to {filename}")
+
 def train_logistic_regression(df_train, df_test):
     X_train, y_train, group_train = prepare_data(df_train)
     X_test, y_test, group_test = prepare_data(df_test)
 
     model = LogisticRegressionModel()
     model.train(X_train, y_train)
+    
+    path = f'trained_models/log_reg_model_{time.time()}.pkl'
+    save_model(model, path)
+
     y_pred = model.predict(X_test)
     return y_pred, y_test, group_test
 
@@ -36,6 +59,11 @@ def train_random_forest(df_train, df_test):
 
     model = RandomForestModel()
     model.train(X_train, y_train)
+    
+    # Save model
+    path = f'trained_models/random_forest_model_{time.time()}.pkl'
+    save_model(model, path)
+    
     y_pred = model.predict(X_test)
     return y_pred, y_test, group_test
 
@@ -46,21 +74,26 @@ def train_catboost(df_train, df_test, df_val):
 
     model = CatBoostRankerModel()
     model.train(X_train, y_train, group_train, X_val, y_val, group_val)
+    
+    # Save model
+    path = f'trained_models/catboost_model_{time.time()}.pkl'
+    save_model(model, path)
+    
     y_pred = model.predict(X_test, group_test)
     return y_pred, y_test, group_test
+
 
 if __name__ == "__main__":
     df_train, df_val, df_test = load_data()
 
-    # Обучение и оценка логистической регрессии
-    y_pred, y_test, group_test = train_logistic_regression(df_train, df_test)
-    evaluate(y_pred, y_test, group_test)
+    if (Config.MODEL_TO_TRAIN == 'LogReg'):
+        y_pred, y_test, group_test = train_logistic_regression(df_train, df_test)
+        evaluate(y_pred, y_test, group_test)
 
-    # # Обучение и оценка случайного леса
-    # y_pred, y_test, group_test = train_random_forest(df_train, df_test)
-    # evaluate(y_pred, y_test, group_test)
+    if (Config.MODEL_TO_TRAIN == 'CatBoost'):
+        y_pred, y_test, group_test = train_catboost(df_train, df_test, df_val)
+        evaluate(y_pred, y_test, group_test)
 
-    # # Обучение и оценка CatBoost
-    # y_pred, y_test, group_test = train_catboost(df_train, df_test, df_val)
-    # evaluate(y_pred, y_test, group_test)
-
+    if (Config.MODEL_TO_TRAIN == 'Tree'):
+        y_pred, y_test, group_test = train_random_forest(df_train, df_test)
+        evaluate(y_pred, y_test, group_test)

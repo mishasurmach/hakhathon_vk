@@ -1,6 +1,13 @@
 import time
 
 class Config:
+    # модель для обучения
+    # MODEL_TO_TRAIN = 'LogReg'
+    MODEL_TO_TRAIN = 'CatBoost'
+    # MODEL_TO_TRAIN = 'Tree'
+
+    MODEL_TO_INFERENCE_PATH = 'trained_models/catboost_model_1730246243.224709.pkl'
+
     # Пути к данным
     TRAIN_DATA_PATH = 'data/train_data.pkl'
     VAL_DATA_PATH = 'data/val_data.pkl'
@@ -29,11 +36,8 @@ class Config:
     
     # Гиперпараметры для DataLoader и модели
     MODEL_NAME = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
-    ADDITIONAL_EMB_COLUMNS = ['euclidean_dist', 'manhattan_dist', 'dot_product', 'chebyshev_dist']
-    
-    # Параметры для расчета метрик
-    #METRIC_NDCG_GROUP_SIZE = 10  # Пример, если нужно учитывать размер групп
+    ADDITIONAL_EMB_COLUMNS = []#['euclidean_dist', 'manhattan_dist', 'dot_product', 'chebyshev_dist']
     
     # Логирование и визуализация
     ENABLE_LOGGING = True
-    ROC_CURVE_PLOT_PATH = f'{time.time()}_roc_curve.png'  # Путь для сохранения графика ROC-кривой
+    ROC_CURVE_PLOT_PATH = f'graphs/{time.time()}_roc_curve.pdf'  # Путь для сохранения графика ROC-кривой
