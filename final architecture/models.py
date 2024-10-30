@@ -1,7 +1,9 @@
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 import catboost as cb
+import lightgbm as lgb
 from config import Config
+import lightgbm as lgb
 
 class LogisticRegressionModel:
     def __init__(self):
@@ -53,3 +55,29 @@ class CatBoostRankerModel:
     def predict(self, X, group=None):
         pool = cb.Pool(data=X, group_id=group)
         return self.model.predict(pool)
+    
+
+class LightGBMRankerModel:
+    def __init__(self):
+        self.model = None
+        self.params = {
+            'objective': 'lambdarank',
+            'metric': 'ndcg',
+            'learning_rate': Config.LGB_LEARNING_RATE,
+            'num_leaves': Config.LGB_NUM_LEAVES,
+            'verbose': -1
+        }
+
+    def train(self, X_train, y_train, group_train, X_val, y_val, group_val):
+        train_data = lgb.Dataset(X_train, label=y_train, group=group_train)
+        val_data = lgb.Dataset(X_val, label=y_val, group=group_val, reference=train_data)
+
+        self.model = lgb.train(
+            self.params,
+            train_data,
+            valid_sets=[val_data],
+            num_boost_round=Config.LGB_NUM_BOOST_ROUND,
+        )
+
+    def predict(self, X, group=None):
+        return self.model.predict(X)
