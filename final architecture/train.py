@@ -110,7 +110,7 @@ def train_lightGBM(df_train, df_test, df_val):
     return y_pred, y_test, group_test
 
 def train_iterative(model, X_train, y_train, X_test, y_test, group_test, lr=0.001, epochs = 20, number_of_exp = 1):
-    writer = SummaryWriter(log_dir=f"runs/experiment{number_of_exp}")
+    writer = SummaryWriter(log_dir=f"runs/experiment{time.time()}")
     
     criterion = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
