@@ -130,8 +130,9 @@ def train_iterative(model, X_train, y_train, X_test, y_test, group_test, lr=0.00
             model.eval()
             with torch.no_grad():
                 y_pred = (model(X_test).squeeze() > 0.5).float()
+                print(y_pred)
                 precision = average_precision_score(y_test.numpy(), y_pred.numpy())
-                ndcg = calculate_ndcg_by_group(y_test, y_pred, group_test)
+                ndcg = calculate_ndcg_by_group(y_test.numpy(), y_pred.numpy(), group_test)
                 auc = roc_auc_score(y_test.numpy(), y_pred.numpy())
 
                 writer.add_scalar("Loss", loss.item(), epoch)
@@ -160,8 +161,7 @@ def train_MLP(df_train, df_test):
     with torch.no_grad():
         y_pred = (model(X_test).squeeze() > 0.5).float()
 
-    return y_pred, y_test, group_test
-
+    return y_pred.numpy(), y_test.numpy(), group_test
 
 if __name__ == "__main__":
     df_train, df_val, df_test = load_data()
