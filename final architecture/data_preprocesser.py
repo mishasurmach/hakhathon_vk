@@ -4,11 +4,14 @@ from datasets import load_dataset
 from scipy.spatial import distance
 from config import Config
 from sentence_transformers import SentenceTransformer
+from transformers import pipeline
 
 class DataPreprocessor:
     def __init__(self, model_name='sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'):
         self.model = SentenceTransformer(model_name)
+        self.paraphraser = pipeline("text2text-generation", model=Config.PARAPHRASER_NAME)
         self.dataset_train = None
+        self.trainn = None
         self.dataset_dev = None
 
     def load_datasets(self):
@@ -21,10 +24,34 @@ class DataPreprocessor:
         dev_df = self.dataset_dev.to_pandas().drop(columns=['emb'])
         
         df_train = train_df[:4155]
+        self.trainn = train_df[:4155]
         df_val = pd.concat([train_df[4155:-200], dev_df[:362], dev_df[-200:]])
         df_test = pd.concat([train_df[-200:], dev_df[362:-200]])
         
         return df_train, df_val, df_test
+    
+    def generate_paraphrases(self, text, num_paraphrases=2):
+        """Создание парафразов для текста с использованием beam search"""
+        paraphrases = self.paraphraser(
+            text,
+            num_return_sequences=num_paraphrases,
+            max_length=100,
+            num_beams=num_paraphrases
+        )
+        return [p['generated_text'] for p in paraphrases]
+
+
+    def expand_training_data(self, df_train, num_paraphrases=2):
+        """Расширение тренировочного набора данных путем генерации парафраз"""
+        new_queries = []
+        for query in df_train['query']:
+            # Добавляем оригинальный запрос
+            new_queries.append(query)
+            # Генерируем и добавляем парафразы
+            new_queries.extend(self.generate_paraphrases(query, num_paraphrases))
+        
+        expanded_df = pd.DataFrame({"query": new_queries})
+        return expanded_df
 
     def encode_queries(self, df, column_name):
         return self.model.encode(df[column_name].tolist())
@@ -80,19 +107,21 @@ class DataPreprocessor:
     def preprocess_and_save(self):
         # Разделение данных
         df_train, df_val, df_test = self.split_datasets()
+
+        print("Перефразирую тренировочные queries.")
+        df_train = self.expand_training_data(df_train, num_paraphrases=Config.DATASET_INCREASE)
+
+        expanded_trainnnn = pd.DataFrame({
+            'query_id': self.trainn['query_id'].repeat(Config.DATASET_INCREASE+1).values,
+            'positive_passages': self.trainn['positive_passages'].repeat(Config.DATASET_INCREASE+1).values,
+            'negative_passages': self.trainn['negative_passages'].repeat(Config.DATASET_INCREASE+1).values
+        })
+
+        df_train = pd.concat([df_train.reset_index(drop=True), expanded_trainnnn.reset_index(drop=True)], axis=1)
         
-        # Replace the current encoding line in preprocess_and_save
         query_embeddings_train = self.model.encode(df_train['query'].tolist())
         query_embeddings_val = self.model.encode(df_val['query'].tolist())
         query_embeddings_test = self.model.encode(df_test['query'].tolist())
-
-        # np.save("query_embeddings_train_SBERT_without_lemma.npy", query_embeddings_train)
-        # np.save("query_embeddings_val_SBERT_without_lemma.npy", query_embeddings_val)
-        # np.save("query_embeddings_test_SBERT_without_lemma.npy", query_embeddings_test)
-
-        # query_embeddings_train = np.load("query_embeddings_train_SBERT_without_lemma.npy").tolist()
-        # query_embeddings_val = np.load("query_embeddings_val_SBERT_without_lemma.npy").tolist()
-        # query_embeddings_test = np.load("query_embeddings_test_SBERT_without_lemma.npy").tolist()
 
         df_train['query_emb'] = list(query_embeddings_train)
         df_val['query_emb'] = list(query_embeddings_val)
