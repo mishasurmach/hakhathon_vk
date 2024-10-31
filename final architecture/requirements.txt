@@ -10,6 +10,8 @@ lightgbm==4.5.0
 torch==2.5.1
 torchvision==0.20.0
 transformers==4.46.1
+streamlit==1.39.
+tensorboard==2.18.0
 
 
 # tiktoken==0.8.0
