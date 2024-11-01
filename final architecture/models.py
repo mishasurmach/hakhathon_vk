@@ -96,3 +96,6 @@ class MLP(nn.Module):
         x = torch.tanh(self.fc2(x))
         x = torch.sigmoid(self.fc3(x))
         return x
+
+    def predict(self, X, group=None):
+        return self.forward(torch.Tensor(X))
