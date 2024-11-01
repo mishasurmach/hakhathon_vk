@@ -50,7 +50,7 @@ class Config:
     
     # Гиперпараметры для DataLoader и модели
     MODEL_NAME = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
-    ADDITIONAL_EMB_COLUMNS = []#['euclidean_dist', 'manhattan_dist', 'dot_product', 'chebyshev_dist']
+    ADDITIONAL_EMB_COLUMNS = ['euclidean_dist', 'manhattan_dist', 'dot_product', 'chebyshev_dist']
 
     PARAPHRASER_NAME = 'cointegrated/rut5-base-paraphraser'
     DATASET_INCREASE = 2
