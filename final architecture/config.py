@@ -33,10 +33,9 @@ class Config:
     RANDOM_FOREST_N_JOBS = -1
     
     # Гиперпараметры для CatBoost
-    CATBOOST_ITERATIONS = 100
+    CATBOOST_ITERATIONS = 1000
     CATBOOST_LEARNING_RATE = 0.1
-    CATBOOST_DEPTH = 6
-    CATBOOST_VERBOSE = 100
+    CATBOOST_DEPTH = 8
 
     # Гиперпараметры для LightGBM
     LGB_NUM_BOOST_ROUND = 100
@@ -44,14 +43,17 @@ class Config:
     LGB_NUM_LEAVES = 127
 
     # Гиперпараметры для MLP
-    MLP_HIDDEN_DIMENSION_1 = 128
-    MLP_HIDDEN_DIMENSION_2 = 50
-    MLP_LEARNING_RATE = 0.003
-    MLP_NUMBER_OF_EPOCHS = 50
+    MLP_HIDDEN_DIMENSION_1 = 31
+    MLP_HIDDEN_DIMENSION_2 = 345
+    MLP_LEARNING_RATE = 0.01
+    MLP_NUMBER_OF_EPOCHS = 300
     
     # Гиперпараметры для DataLoader и модели
     MODEL_NAME = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
     ADDITIONAL_EMB_COLUMNS = []#['euclidean_dist', 'manhattan_dist', 'dot_product', 'chebyshev_dist']
+
+    PARAPHRASER_NAME = 'cointegrated/rut5-base-paraphraser'
+    DATASET_INCREASE = 2
     
     # Логирование и визуализация
     ENABLE_LOGGING = True
