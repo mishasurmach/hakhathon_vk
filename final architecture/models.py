@@ -87,7 +87,7 @@ class MLP(nn.Module):
     def __init__(self):
         super(MLP, self).__init__()
 
-        self.fc1 = nn.Linear(768, Config.MLP_HIDDEN_DIMENSION_1)
+        self.fc1 = nn.Linear(772, Config.MLP_HIDDEN_DIMENSION_1)
         self.fc2 = nn.Linear(Config.MLP_HIDDEN_DIMENSION_1, Config.MLP_HIDDEN_DIMENSION_2)
         self.fc3 = nn.Linear(Config.MLP_HIDDEN_DIMENSION_2, 1)  
 
