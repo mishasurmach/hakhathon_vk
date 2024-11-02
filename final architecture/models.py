@@ -45,7 +45,8 @@ class CatBoostRankerModel:
             iterations=Config.CATBOOST_ITERATIONS,
             learning_rate=Config.CATBOOST_LEARNING_RATE,
             depth=Config.CATBOOST_DEPTH,
-            verbose=Config.CATBOOST_VERBOSE
+            verbose=Config.CATBOOST_VERBOSE,
+            train_dir='runs'
         )
 
     def train(self, X_train, y_train, group_train, X_val, y_val, group_val):
